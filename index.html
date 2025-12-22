@@ -3,253 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>日文打字練習 - v4.5 視覺平衡版</title>
+    <title>日文打字練習 - 速度監測版</title>
+    
     <style>
-        /* --- 配色系統 (保持 v4.3 的深色質感) --- */
+        /* --- 配色與佈局變數 --- */
         :root {
-            --bg: #f0f2f5;
-            --box: #ffffff;
-            --primary: #34495e; 
-            --text: #2c3e50;
-            --highlight: #e8e8e8; 
-            --accent: #e74c3c; 
+            --bg: #f0f2f5; --box: #ffffff; --primary: #34495e; --text: #2c3e50; --accent: #e74c3c; 
         }
+        [data-theme="matcha"] { --bg: #e6e6d1; --box: #fbfbf6; --primary: #556b2f; --text: #3e4a2e; }
+        [data-theme="sakura"] { --bg: #f2e6e6; --box: #fffafa; --primary: #b35a6d; --text: #5d3a43; }
+        [data-theme="blue"] { --bg: #dbe4eb; --box: #f5f9fc; --primary: #375a7f; --text: #20354b; }
 
-        /* 抹茶 (Matcha) */
-        [data-theme="matcha"] {
-            --bg: #e6e6d1; --box: #fbfbf6; --primary: #556b2f; --text: #3e4a2e; --highlight: #dce2c8;
-        }
-        /* 櫻花 (Sakura) */
-        [data-theme="sakura"] {
-            --bg: #f2e6e6; --box: #fffafa; --primary: #b35a6d; --text: #5d3a43; --highlight: #ebd4d8;
-        }
-        /* 質感藍 (Blue) */
-        [data-theme="blue"] {
-            --bg: #dbe4eb; --box: #f5f9fc; --primary: #375a7f; --text: #20354b; --highlight: #cdddec;
-        }
-
-        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; transition: 0.3s; display: flex; justify-content: center; min-height: 100vh; }
-        .container { width: 100%; max-width: 800px; background: var(--box); padding: 40px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.05); align-self: center; }
-
-        /* 主題切換按鈕 */
-        .theme-panel { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 25px; gap: 10px; }
-        .color-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; }
-        .color-btn:hover { transform: scale(1.1); }
-        .btn-default { background-color: #34495e; }
-        .btn-matcha { background-color: #556b2f; }
-        .btn-sakura { background-color: #b35a6d; }
-        .btn-blue { background-color: #375a7f; }
-
-        /* 設定區域 */
-        .setup-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--primary); }
-        textarea { width: 100%; height: 150px; padding: 15px; border-radius: 8px; border: 2px solid #ddd; font-size: 16px; box-sizing: border-box; resize: vertical; outline: none; background: #fafafa; color: var(--text); }
-        textarea:focus { border-color: var(--primary); background: #fff; }
-        input[type="number"] { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #ddd; font-size: 16px; box-sizing: border-box; outline: none; }
-        input[type="number"]:focus { border-color: var(--primary); }
-
-        /* 練習顯示區 */
-        .status-bar { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; color: var(--primary); font-size: 18px; }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: var(--bg); margin: 0; padding: 0; transition: 0.3s; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         
-        #displayArea { 
-            font-size: 28px; line-height: 2.8; height: 300px; overflow: hidden; position: relative;
-            padding: 20px; border: 2px solid rgba(0,0,0,0.05); border-radius: 10px; margin-bottom: 20px;
-            white-space: pre-wrap; word-break: break-all; background: var(--box); box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
+        /* 整個頁面的主容器 */
+        .wrapper { display: flex; justify-content: center; width: 100%; max-width: 1400px; padding: 40px 10px; box-sizing: border-box; }
+        
+        /* 側邊廣告欄位 */
+        .ad-sidebar { 
+            width: 160px; 
+            display: flex; 
+            flex-direction: column; 
+            padding-top: 60px; 
+            flex-shrink: 0; 
+        }
+        
+        /* 主練習區域 */
+        .container { 
+            flex: 1; 
+            max-width: 800px; 
+            background: var(--box); 
+            padding: 40px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.05); 
+            margin: 0 30px; 
         }
 
-        .char-current { background: var(--primary); color: #fff; border-radius: 4px; padding: 2px 0; }
-        .char-correct { color: #bbb; }
-        .char-wrong { background: var(--accent); color: white; border-radius: 4px; }
+        /* --- 內部元素樣式 --- */
+        .theme-panel { display: flex; justify-content: flex-end; margin-bottom: 20px; gap: 10px; }
+        .color-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.1); cursor: pointer; }
+        .btn-default { background-color: #34495e; } .btn-matcha { background-color: #556b2f; }
+        .btn-sakura { background-color: #b35a6d; } .btn-blue { background-color: #375a7f; }
 
-        #inputField { width: 100%; height: 60px; font-size: 24px; padding: 10px 15px; border: 2px solid var(--primary); border-radius: 8px; box-sizing: border-box; outline: none; background: var(--box); color: var(--text); }
-
-        /* 按鈕群組 (修正重點：統一外觀) */
+        textarea, input[type="number"] { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #ddd; font-size: 16px; box-sizing: border-box; margin-bottom: 20px; outline: none; }
+        #displayArea { font-size: 28px; line-height: 2.8; height: 300px; overflow: hidden; padding: 20px; border: 2px solid rgba(0,0,0,0.05); border-radius: 10px; margin-bottom: 20px; white-space: pre-wrap; word-break: break-all; background: var(--box); }
+        .char-current { background: var(--primary); color: #fff; border-radius: 4px; }
+        .char-correct { color: #bbb; } .char-wrong { background: var(--accent); color: white; border-radius: 4px; }
+        #inputField { width: 100%; height: 60px; font-size: 24px; padding: 10px 15px; border: 2px solid var(--primary); border-radius: 8px; box-sizing: border-box; outline: none; }
         .btn-group { display: flex; gap: 15px; margin-top: 25px; }
-        
-        .btn { padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.2s; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        
-        /* 讓所有功能按鈕都使用主題色 */
-        .btn-main, .btn-retry, .btn-edit { 
-            background: var(--primary); 
-            color: white; 
-        }
-        
-        /* Hover 效果統一 */
-        .btn-main:hover, .btn-retry:hover, .btn-edit:hover { 
-            opacity: 0.9; 
-            transform: translateY(-2px); /* 輕微浮起效果 */
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-        }
+        .btn { padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; background: var(--primary); color: white; transition: 0.2s; }
+        .btn:hover { opacity: 0.9; transform: translateY(-2px); }
 
-        h2 { margin-top: 0; text-align: center; color: var(--primary); letter-spacing: 1px; }
+        /* 手機版隱藏廣告 */
+        @media (max-width: 1100px) { 
+            .ad-sidebar { display: none; } 
+            .container { margin: 0; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="theme-panel">
-        <button class="color-btn btn-default" onclick="changeTheme('default')" title="極簡深灰"></button>
-        <button class="color-btn btn-matcha" onclick="changeTheme('matcha')" title="禪意抹茶"></button>
-        <button class="color-btn btn-sakura" onclick="changeTheme('sakura')" title="乾燥玫瑰"></button>
-        <button class="color-btn btn-blue" onclick="changeTheme('blue')" title="莫蘭迪藍"></button>
-    </div>
-
-    <div id="setupArea">
-        <h2>🇯🇵 日文打字練習</h2>
-        <div class="setup-group">
-            <label>1. 貼上練習文章</label>
-            <textarea id="sourceText" placeholder="請在此貼上...">あいうえお かきくけこ さしすせそ たちつてと なにぬねの はひふへほ まみむめも やゆよ らりるれろ わをん</textarea>
-        </div>
-        <div class="setup-group">
-            <label>2. 設定時間限制 (分鐘)</label>
-            <input type="number" id="timeSetting" value="1" min="0.5" step="0.5" placeholder="例如：1">
-        </div>
-        <button class="btn btn-main" onclick="startGame()">開始練習</button>
-    </div>
-
-    <div id="practiceArea" style="display:none;">
-        <div class="status-bar">
-            <span>⏳ 時間：<span id="timerDisplay">60</span> 秒</span>
-            <span>正確率：<span id="accDisplay">100%</span></span>
+<div class="wrapper">
+    <div class="ad-sidebar">
         </div>
 
-        <div id="displayArea"><div id="textContainer"></div></div>
-        
-        <input type="text" id="inputField" placeholder="點此開始輸入..." oninput="processInput()" autocomplete="off">
-        
-        <div class="btn-group">
-            <button class="btn btn-retry" onclick="retryGame()">🔄 重新開始</button>
-            <button class="btn btn-edit" onclick="backToSetup()">⚙️ 修改設定</button>
+    <div class="container">
+        <div class="theme-panel">
+            <button class="color-btn btn-default" onclick="changeTheme('default')" title="極簡深灰"></button>
+            <button class="color-btn btn-matcha" onclick="changeTheme('matcha')" title="禪意抹茶"></button>
+            <button class="color-btn btn-sakura" onclick="changeTheme('sakura')" title="乾燥玫瑰"></button>
+            <button class="color-btn btn-blue" onclick="changeTheme('blue')" title="莫蘭迪藍"></button>
+        </div>
+
+        <div id="setupArea">
+            <h2 style="text-align:center; color:var(--primary);">🇯🇵 日文打字練習</h2>
+            <textarea id="sourceText" placeholder="在此貼上練習文章...">あいうえお かきくけこ さしすせそ たちつてと なにぬねの はひふへほ まみむめも やゆよ らりるれろ わをん</textarea>
+            <label style="font-weight:bold; color:var(--primary);">設定分鐘數：</label>
+            <input type="number" id="timeSetting" value="1" min="0.5" step="0.5">
+            <button class="btn" onclick="startGame()">開始練習</button>
+        </div>
+
+        <div id="practiceArea" style="display:none;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-weight:bold; color:var(--primary); font-size: 1.1em;">
+                <span>⏳ <span id="timerDisplay">60</span> 秒</span>
+                <span>🚀 速度：<span id="speedDisplay">0</span> 字/分</span>
+                <span>🎯 正確率：<span id="accDisplay">100%</span></span>
+            </div>
+            
+            <div id="displayArea"><div id="textContainer"></div></div>
+            <input type="text" id="inputField" placeholder="點此開始輸入..." oninput="processInput()" autocomplete="off">
+            <div class="btn-group">
+                <button class="btn" onclick="retryGame()">🔄 重新開始</button>
+                <button class="btn" onclick="backToSetup()">⚙️ 修改設定</button>
+            </div>
         </div>
     </div>
+
+    <div class="ad-sidebar">
+        </div>
 </div>
 
 <script>
-    let originalText = "";
-    let timeLeft = 60;
-    let timerInterval = null;
-    let isPlaying = false;
-    let hasStarted = false;
-
-    function changeTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme === 'default' ? '' : theme);
-    }
-
+    let originalText = "", timeLeft = 60, totalTime = 60, timerInterval = null, isPlaying = false, hasStarted = false;
+    
+    function changeTheme(theme) { document.documentElement.setAttribute('data-theme', theme === 'default' ? '' : theme); }
+    
     function startGame() {
         originalText = document.getElementById('sourceText').value.trim();
-        if(!originalText) return alert("請先貼上文章內容！");
-
-        let min = parseFloat(document.getElementById('timeSetting').value);
-        if(!min || min <= 0) min = 1;
+        if(!originalText) return alert("請貼上內容");
+        let min = parseFloat(document.getElementById('timeSetting').value) || 1;
+        totalTime = Math.floor(min * 60); // 紀錄總時間
         
         document.getElementById('setupArea').style.display = 'none';
         document.getElementById('practiceArea').style.display = 'block';
-
-        resetGameLogic(min * 60);
+        resetGameLogic(totalTime);
     }
-
-    function retryGame() {
-        let min = parseFloat(document.getElementById('timeSetting').value);
-        if(!min || min <= 0) min = 1;
-        resetGameLogic(min * 60);
-    }
-
+    
+    function retryGame() { startGame(); }
+    
     function resetGameLogic(seconds) {
-        timeLeft = Math.floor(seconds);
-        
+        timeLeft = seconds;
         renderText();
         document.getElementById('timerDisplay').innerText = timeLeft;
         document.getElementById('accDisplay').innerText = "100%";
+        document.getElementById('speedDisplay').innerText = "0"; // 重置速度
         
-        const input = document.getElementById('inputField');
-        input.value = "";
-        input.disabled = false;
+        const input = document.getElementById('inputField'); 
+        input.value = ""; 
+        input.disabled = false; 
         input.focus();
-
+        
         hasStarted = false; 
-        isPlaying = true;
+        isPlaying = true; 
         if(timerInterval) clearInterval(timerInterval);
     }
-
+    
     function renderText() {
-        const container = document.getElementById('textContainer');
+        const container = document.getElementById('textContainer'); 
         container.innerHTML = "";
         originalText.split('').forEach((char, i) => {
-            const span = document.createElement('span');
+            const span = document.createElement('span'); 
             span.innerText = char;
-            if (i === 0) span.className = 'char-current';
+            if (i === 0) span.className = 'char-current'; 
             container.appendChild(span);
         });
         document.getElementById('displayArea').scrollTop = 0;
     }
-
+    
     function processInput() {
         if(!isPlaying) return;
-
-        if(!hasStarted) {
-            hasStarted = true;
-            startTimer();
-        }
-
+        if(!hasStarted) { hasStarted = true; startTimer(); }
+        
         const inputVal = document.getElementById('inputField').value;
         const spans = document.getElementById('textContainer').querySelectorAll('span');
-        const displayArea = document.getElementById('displayArea');
+        const displayArea = document.getElementById('displayArea'); 
         let correctCount = 0;
 
         spans.forEach((span, i) => {
-            span.className = ''; 
+            span.className = '';
             if (inputVal[i] == null) {
                 if (i === inputVal.length) {
                     span.className = 'char-current';
-                    const spanTop = span.offsetTop;
-                    const areaHeight = displayArea.offsetHeight;
-                    displayArea.scrollTop = spanTop - (areaHeight / 2) + 30; 
+                    displayArea.scrollTop = span.offsetTop - (displayArea.offsetHeight / 2) + 30; 
                 }
             } else {
-                if(inputVal[i] === span.innerText) {
-                    span.className = 'char-correct';
-                    correctCount++;
-                } else {
-                    span.className = 'char-wrong';
+                if(inputVal[i] === span.innerText) { 
+                    span.className = 'char-correct'; 
+                    correctCount++; 
+                } else { 
+                    span.className = 'char-wrong'; 
                 }
             }
         });
 
+        // --- 計算正確率 ---
         if(inputVal.length > 0) {
-            let acc = Math.floor((correctCount / inputVal.length) * 100);
-            document.getElementById('accDisplay').innerText = acc + "%";
+            document.getElementById('accDisplay').innerText = Math.floor((correctCount / inputVal.length) * 100) + "%";
         }
 
-        if (inputVal.length >= originalText.length) {
-            endGame("🎉 練習完成！");
-        }
+        // --- 新增：計算即時速度 (字/分) ---
+        updateSpeed(correctCount);
+
+        if (inputVal.length >= originalText.length) endGame("🎉 練習完成！");
+    }
+    
+    // 獨立出來的速度計算函數
+    function updateSpeed(correctCount) {
+        let timeElapsed = totalTime - timeLeft;
+        if (timeElapsed <= 0) timeElapsed = 1; // 避免除以 0
+        
+        // 公式：(正確字數 / 經過秒數) * 60 = 每分鐘字數
+        let cpm = Math.floor((correctCount / timeElapsed) * 60);
+        document.getElementById('speedDisplay').innerText = cpm;
     }
 
     function startTimer() {
         timerInterval = setInterval(() => {
-            timeLeft--;
+            timeLeft--; 
             document.getElementById('timerDisplay').innerText = timeLeft;
             
-            if(timeLeft <= 0) {
-                endGame("⏰ 時間到！練習結束。");
+            // 每秒鐘也更新一次速度，這樣就算停下來不打，速度也會慢慢往下掉（更真實）
+            const inputVal = document.getElementById('inputField').value;
+            let correctCount = 0;
+            const spans = document.getElementById('textContainer').querySelectorAll('span');
+            for(let i=0; i<inputVal.length; i++) {
+                if(inputVal[i] === spans[i]?.innerText) correctCount++;
             }
+            updateSpeed(correctCount);
+
+            if(timeLeft <= 0) endGame("⏰ 時間到！");
         }, 1000);
     }
-
-    function endGame(msg) {
-        isPlaying = false;
-        clearInterval(timerInterval);
-        document.getElementById('inputField').disabled = true;
-        setTimeout(() => {
-            alert(msg);
-        }, 100);
+    
+    function endGame(msg) { 
+        isPlaying = false; 
+        clearInterval(timerInterval); 
+        document.getElementById('inputField').disabled = true; 
+        
+        // 結束時再更新一次最後數據
+        setTimeout(() => alert(msg), 100); 
     }
-
-    function backToSetup() {
-        isPlaying = false;
-        clearInterval(timerInterval);
-        document.getElementById('practiceArea').style.display = 'none';
-        document.getElementById('setupArea').style.display = 'block';
+    
+    function backToSetup() { 
+        isPlaying = false; 
+        clearInterval(timerInterval); 
+        document.getElementById('practiceArea').style.display = 'none'; 
+        document.getElementById('setupArea').style.display = 'block'; 
     }
 </script>
 </body>

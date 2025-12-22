@@ -3,49 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>日文打字練習 - 速度監測版</title>
+    <title>日文打字練習 - Ning</title>
     
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6485376162723745"
+     crossorigin="anonymous"></script>
+
     <style>
-        /* --- 配色與佈局變數 --- */
-        :root {
-            --bg: #f0f2f5; --box: #ffffff; --primary: #34495e; --text: #2c3e50; --accent: #e74c3c; 
-        }
+        /* --- 樣式設定 (包含側邊欄與速度顯示) --- */
+        :root { var(--bg: #f0f2f5); --box: #ffffff; --primary: #34495e; --text: #2c3e50; --accent: #e74c3c; }
         [data-theme="matcha"] { --bg: #e6e6d1; --box: #fbfbf6; --primary: #556b2f; --text: #3e4a2e; }
         [data-theme="sakura"] { --bg: #f2e6e6; --box: #fffafa; --primary: #b35a6d; --text: #5d3a43; }
         [data-theme="blue"] { --bg: #dbe4eb; --box: #f5f9fc; --primary: #375a7f; --text: #20354b; }
 
         body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: var(--bg); margin: 0; padding: 0; transition: 0.3s; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        
-        /* 整個頁面的主容器 */
         .wrapper { display: flex; justify-content: center; width: 100%; max-width: 1400px; padding: 40px 10px; box-sizing: border-box; }
+        .ad-sidebar { width: 160px; display: flex; flex-direction: column; padding-top: 60px; flex-shrink: 0; }
+        .container { flex: 1; max-width: 800px; background: var(--box); padding: 40px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.05); margin: 0 30px; }
         
-        /* 側邊廣告欄位 */
-        .ad-sidebar { 
-            width: 160px; 
-            display: flex; 
-            flex-direction: column; 
-            padding-top: 60px; 
-            flex-shrink: 0; 
-        }
-        
-        /* 主練習區域 */
-        .container { 
-            flex: 1; 
-            max-width: 800px; 
-            background: var(--box); 
-            padding: 40px; 
-            border-radius: 12px; 
-            box-shadow: 0 8px 25px rgba(0,0,0,0.05); 
-            margin: 0 30px; 
-        }
-
-        /* --- 內部元素樣式 --- */
         .theme-panel { display: flex; justify-content: flex-end; margin-bottom: 20px; gap: 10px; }
         .color-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.1); cursor: pointer; }
         .btn-default { background-color: #34495e; } .btn-matcha { background-color: #556b2f; }
         .btn-sakura { background-color: #b35a6d; } .btn-blue { background-color: #375a7f; }
 
-        textarea, input[type="number"] { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #ddd; font-size: 16px; box-sizing: border-box; margin-bottom: 20px; outline: none; }
+        textarea, input[type="number"] { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #ddd; font-size: 16px; margin-bottom: 20px; outline: none; box-sizing: border-box; }
         #displayArea { font-size: 28px; line-height: 2.8; height: 300px; overflow: hidden; padding: 20px; border: 2px solid rgba(0,0,0,0.05); border-radius: 10px; margin-bottom: 20px; white-space: pre-wrap; word-break: break-all; background: var(--box); }
         .char-current { background: var(--primary); color: #fff; border-radius: 4px; }
         .char-correct { color: #bbb; } .char-wrong { background: var(--accent); color: white; border-radius: 4px; }
@@ -54,11 +34,7 @@
         .btn { padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; background: var(--primary); color: white; transition: 0.2s; }
         .btn:hover { opacity: 0.9; transform: translateY(-2px); }
 
-        /* 手機版隱藏廣告 */
-        @media (max-width: 1100px) { 
-            .ad-sidebar { display: none; } 
-            .container { margin: 0; }
-        }
+        @media (max-width: 1100px) { .ad-sidebar { display: none; } .container { margin: 0; } }
     </style>
 </head>
 <body>
@@ -69,10 +45,10 @@
 
     <div class="container">
         <div class="theme-panel">
-            <button class="color-btn btn-default" onclick="changeTheme('default')" title="極簡深灰"></button>
-            <button class="color-btn btn-matcha" onclick="changeTheme('matcha')" title="禪意抹茶"></button>
-            <button class="color-btn btn-sakura" onclick="changeTheme('sakura')" title="乾燥玫瑰"></button>
-            <button class="color-btn btn-blue" onclick="changeTheme('blue')" title="莫蘭迪藍"></button>
+            <button class="color-btn btn-default" onclick="changeTheme('default')"></button>
+            <button class="color-btn btn-matcha" onclick="changeTheme('matcha')"></button>
+            <button class="color-btn btn-sakura" onclick="changeTheme('sakura')"></button>
+            <button class="color-btn btn-blue" onclick="changeTheme('blue')"></button>
         </div>
 
         <div id="setupArea">
@@ -89,7 +65,6 @@
                 <span>🚀 速度：<span id="speedDisplay">0</span> 字/分</span>
                 <span>🎯 正確率：<span id="accDisplay">100%</span></span>
             </div>
-            
             <div id="displayArea"><div id="textContainer"></div></div>
             <input type="text" id="inputField" placeholder="點此開始輸入..." oninput="processInput()" autocomplete="off">
             <div class="btn-group">
@@ -105,60 +80,39 @@
 
 <script>
     let originalText = "", timeLeft = 60, totalTime = 60, timerInterval = null, isPlaying = false, hasStarted = false;
-    
     function changeTheme(theme) { document.documentElement.setAttribute('data-theme', theme === 'default' ? '' : theme); }
-    
     function startGame() {
         originalText = document.getElementById('sourceText').value.trim();
         if(!originalText) return alert("請貼上內容");
         let min = parseFloat(document.getElementById('timeSetting').value) || 1;
-        totalTime = Math.floor(min * 60); // 紀錄總時間
-        
+        totalTime = Math.floor(min * 60);
         document.getElementById('setupArea').style.display = 'none';
         document.getElementById('practiceArea').style.display = 'block';
         resetGameLogic(totalTime);
     }
-    
     function retryGame() { startGame(); }
-    
     function resetGameLogic(seconds) {
-        timeLeft = seconds;
-        renderText();
+        timeLeft = seconds; renderText();
         document.getElementById('timerDisplay').innerText = timeLeft;
         document.getElementById('accDisplay').innerText = "100%";
-        document.getElementById('speedDisplay').innerText = "0"; // 重置速度
-        
-        const input = document.getElementById('inputField'); 
-        input.value = ""; 
-        input.disabled = false; 
-        input.focus();
-        
-        hasStarted = false; 
-        isPlaying = true; 
-        if(timerInterval) clearInterval(timerInterval);
+        document.getElementById('speedDisplay').innerText = "0";
+        const input = document.getElementById('inputField'); input.value = ""; input.disabled = false; input.focus();
+        hasStarted = false; isPlaying = true; if(timerInterval) clearInterval(timerInterval);
     }
-    
     function renderText() {
-        const container = document.getElementById('textContainer'); 
-        container.innerHTML = "";
+        const container = document.getElementById('textContainer'); container.innerHTML = "";
         originalText.split('').forEach((char, i) => {
-            const span = document.createElement('span'); 
-            span.innerText = char;
-            if (i === 0) span.className = 'char-current'; 
-            container.appendChild(span);
+            const span = document.createElement('span'); span.innerText = char;
+            if (i === 0) span.className = 'char-current'; container.appendChild(span);
         });
         document.getElementById('displayArea').scrollTop = 0;
     }
-    
     function processInput() {
         if(!isPlaying) return;
         if(!hasStarted) { hasStarted = true; startTimer(); }
-        
         const inputVal = document.getElementById('inputField').value;
         const spans = document.getElementById('textContainer').querySelectorAll('span');
-        const displayArea = document.getElementById('displayArea'); 
-        let correctCount = 0;
-
+        const displayArea = document.getElementById('displayArea'); let correctCount = 0;
         spans.forEach((span, i) => {
             span.className = '';
             if (inputVal[i] == null) {
@@ -167,69 +121,33 @@
                     displayArea.scrollTop = span.offsetTop - (displayArea.offsetHeight / 2) + 30; 
                 }
             } else {
-                if(inputVal[i] === span.innerText) { 
-                    span.className = 'char-correct'; 
-                    correctCount++; 
-                } else { 
-                    span.className = 'char-wrong'; 
-                }
+                if(inputVal[i] === span.innerText) { span.className = 'char-correct'; correctCount++; }
+                else { span.className = 'char-wrong'; }
             }
         });
-
-        // --- 計算正確率 ---
-        if(inputVal.length > 0) {
-            document.getElementById('accDisplay').innerText = Math.floor((correctCount / inputVal.length) * 100) + "%";
-        }
-
-        // --- 新增：計算即時速度 (字/分) ---
+        if(inputVal.length > 0) document.getElementById('accDisplay').innerText = Math.floor((correctCount / inputVal.length) * 100) + "%";
         updateSpeed(correctCount);
-
         if (inputVal.length >= originalText.length) endGame("🎉 練習完成！");
     }
-    
-    // 獨立出來的速度計算函數
     function updateSpeed(correctCount) {
         let timeElapsed = totalTime - timeLeft;
-        if (timeElapsed <= 0) timeElapsed = 1; // 避免除以 0
-        
-        // 公式：(正確字數 / 經過秒數) * 60 = 每分鐘字數
+        if (timeElapsed <= 0) timeElapsed = 1;
         let cpm = Math.floor((correctCount / timeElapsed) * 60);
         document.getElementById('speedDisplay').innerText = cpm;
     }
-
     function startTimer() {
         timerInterval = setInterval(() => {
-            timeLeft--; 
-            document.getElementById('timerDisplay').innerText = timeLeft;
-            
-            // 每秒鐘也更新一次速度，這樣就算停下來不打，速度也會慢慢往下掉（更真實）
+            timeLeft--; document.getElementById('timerDisplay').innerText = timeLeft;
             const inputVal = document.getElementById('inputField').value;
             let correctCount = 0;
             const spans = document.getElementById('textContainer').querySelectorAll('span');
-            for(let i=0; i<inputVal.length; i++) {
-                if(inputVal[i] === spans[i]?.innerText) correctCount++;
-            }
+            for(let i=0; i<inputVal.length; i++) { if(inputVal[i] === spans[i]?.innerText) correctCount++; }
             updateSpeed(correctCount);
-
             if(timeLeft <= 0) endGame("⏰ 時間到！");
         }, 1000);
     }
-    
-    function endGame(msg) { 
-        isPlaying = false; 
-        clearInterval(timerInterval); 
-        document.getElementById('inputField').disabled = true; 
-        
-        // 結束時再更新一次最後數據
-        setTimeout(() => alert(msg), 100); 
-    }
-    
-    function backToSetup() { 
-        isPlaying = false; 
-        clearInterval(timerInterval); 
-        document.getElementById('practiceArea').style.display = 'none'; 
-        document.getElementById('setupArea').style.display = 'block'; 
-    }
+    function endGame(msg) { isPlaying = false; clearInterval(timerInterval); document.getElementById('inputField').disabled = true; setTimeout(() => alert(msg), 100); }
+    function backToSetup() { isPlaying = false; clearInterval(timerInterval); document.getElementById('practiceArea').style.display = 'none'; document.getElementById('setupArea').style.display = 'block'; }
 </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>日文打字練習 - 修正捲動版</title>
+    <title>日文打字練習 - Enter修復版</title>
     
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6485376162723745"
      crossorigin="anonymous"></script>
@@ -25,27 +25,44 @@
         .btn-default { background-color: #34495e; } .btn-matcha { background-color: #556b2f; }
         .btn-sakura { background-color: #b35a6d; } .btn-blue { background-color: #375a7f; }
 
+        /* 通用 textarea 設定 */
         textarea, input[type="number"] { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #ddd; font-size: 16px; margin-bottom: 20px; outline: none; box-sizing: border-box; }
         
         /* 顯示區域樣式 */
         #displayArea { 
             font-size: 28px; 
-            line-height: 2.8; /* 行高設定 */
+            line-height: 2.8; 
             height: 300px; 
-            overflow: hidden; /* 隱藏超出範圍的文字 */
+            overflow: hidden; 
             padding: 20px; 
             border: 2px solid rgba(0,0,0,0.05); 
             border-radius: 10px; 
             margin-bottom: 20px; 
-            white-space: pre-wrap; 
+            white-space: pre-wrap; /* 確保換行符號能正確顯示 */
             word-break: break-all; 
             background: var(--box); 
-            position: relative; /* 確保捲動定位準確 */
+            position: relative; 
         }
 
         .char-current { background: var(--primary); color: #fff; border-radius: 4px; }
         .char-correct { color: #bbb; } .char-wrong { background: var(--accent); color: white; border-radius: 4px; }
-        #inputField { width: 100%; height: 60px; font-size: 24px; padding: 10px 15px; border: 2px solid var(--primary); border-radius: 8px; box-sizing: border-box; outline: none; }
+        
+        /* ★ 修正輸入框樣式 ★ */
+        /* 改用 textarea 後，要強制設定高度與隱藏 resize，讓它看起來像單行輸入框但支援換行 */
+        #inputField { 
+            width: 100%; 
+            height: 60px; /* 固定高度 */
+            font-size: 24px; 
+            padding: 10px 15px; 
+            border: 2px solid var(--primary); 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            outline: none; 
+            resize: none; /* 禁止使用者拉動大小 */
+            overflow: hidden; /* 隱藏捲軸 */
+            font-family: inherit;
+        }
+
         .btn-group { display: flex; gap: 15px; margin-top: 25px; }
         .btn { padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; background: var(--primary); color: white; transition: 0.2s; }
         .btn:hover { opacity: 0.9; transform: translateY(-2px); }
@@ -82,7 +99,9 @@
                 <span>🎯 正確率：<span id="accDisplay">100%</span></span>
             </div>
             <div id="displayArea"><div id="textContainer"></div></div>
-            <input type="text" id="inputField" placeholder="點此開始輸入..." oninput="processInput()" autocomplete="off">
+            
+            <textarea id="inputField" placeholder="點此開始輸入..." oninput="processInput()" autocomplete="off"></textarea>
+            
             <div class="btn-group">
                 <button class="btn" onclick="retryGame()">🔄 重新開始</button>
                 <button class="btn" onclick="backToSetup()">⚙️ 修改設定</button>
@@ -123,13 +142,14 @@
     function renderText() {
         const container = document.getElementById('textContainer'); container.innerHTML = "";
         originalText.split('').forEach((char, i) => {
-            const span = document.createElement('span'); span.innerText = char;
-            if (i === 0) span.className = 'char-current'; container.appendChild(span);
+            const span = document.createElement('span'); 
+            span.innerText = char;
+            if (i === 0) span.className = 'char-current'; 
+            container.appendChild(span);
         });
         document.getElementById('displayArea').scrollTop = 0;
     }
     
-    // ★ 重點修正：processInput 函數 ★
     function processInput() {
         if(!isPlaying) return;
         if(!hasStarted) { hasStarted = true; startTimer(); }
@@ -141,16 +161,23 @@
 
         spans.forEach((span, i) => {
             span.className = '';
+            // --- 判斷邏輯 ---
             if (inputVal[i] == null) {
+                // 還沒打到的字
                 if (i === inputVal.length) {
                     span.className = 'char-current';
-                    // --- 這裡修正了自動捲動邏輯 ---
-                    // 讓當前正在打的這行字，直接捲動到顯示框的最上方
+                    // ★自動捲動修正★
                     displayArea.scrollTop = span.offsetTop; 
                 }
             } else {
-                if(inputVal[i] === span.innerText) { span.className = 'char-correct'; correctCount++; }
-                else { span.className = 'char-wrong'; }
+                // 已經打過的字
+                // 因為我們現在支援 Enter (\n)，這裡會自動比對原文的換行符號
+                if(inputVal[i] === span.innerText) { 
+                    span.className = 'char-correct'; 
+                    correctCount++; 
+                } else { 
+                    span.className = 'char-wrong'; 
+                }
             }
         });
 
@@ -172,7 +199,10 @@
             const inputVal = document.getElementById('inputField').value;
             let correctCount = 0;
             const spans = document.getElementById('textContainer').querySelectorAll('span');
-            for(let i=0; i<inputVal.length; i++) { if(inputVal[i] === spans[i]?.innerText) correctCount++; }
+            // 這裡的邏輯也要支援多行
+            for(let i=0; i<inputVal.length; i++) { 
+                if(inputVal[i] === spans[i]?.innerText) correctCount++; 
+            }
             updateSpeed(correctCount);
             if(timeLeft <= 0) endGame("⏰ 時間到！");
         }, 1000);

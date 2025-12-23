@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>日文打字練習 - Enter修復版</title>
+    <title>日文打字練習 - 視覺聚焦版</title>
     
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6485376162723745"
      crossorigin="anonymous"></script>
@@ -25,41 +25,79 @@
         .btn-default { background-color: #34495e; } .btn-matcha { background-color: #556b2f; }
         .btn-sakura { background-color: #b35a6d; } .btn-blue { background-color: #375a7f; }
 
-        /* 通用 textarea 設定 */
         textarea, input[type="number"] { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #ddd; font-size: 16px; margin-bottom: 20px; outline: none; box-sizing: border-box; }
         
-        /* 顯示區域樣式 */
+        /* 顯示區域樣式 - 視覺優化 */
         #displayArea { 
             font-size: 28px; 
-            line-height: 2.8; 
-            height: 300px; 
+            line-height: 2.5; 
+            height: 220px; /*稍微縮小高度，讓視線更集中*/
             overflow: hidden; 
-            padding: 20px; 
-            border: 2px solid rgba(0,0,0,0.05); 
+            padding: 40px 20px; /* 增加內距，讓文字不會貼邊 */
+            border: none; /* 移除邊框，更乾淨 */
+            background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.02) 100%); /* 微弱漸層 */
             border-radius: 10px; 
-            margin-bottom: 20px; 
-            white-space: pre-wrap; /* 確保換行符號能正確顯示 */
+            margin-bottom: 40px; /* ★關鍵：增加底部距離，把輸入框推遠，避免擋住 */
+            white-space: pre-wrap; 
             word-break: break-all; 
-            background: var(--box); 
             position: relative; 
+            text-align: left; /* 確保靠左對齊 */
         }
 
-        .char-current { background: var(--primary); color: #fff; border-radius: 4px; }
-        .char-correct { color: #bbb; } .char-wrong { background: var(--accent); color: white; border-radius: 4px; }
+        /* 加上一個中間的輔助線（選擇性，增加專注感） */
+        #displayArea::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(0,0,0,0.03);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        #textContainer {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ★ 重點：文字狀態樣式 ★ */
         
-        /* ★ 修正輸入框樣式 ★ */
-        /* 改用 textarea 後，要強制設定高度與隱藏 resize，讓它看起來像單行輸入框但支援換行 */
+        /* 1. 當前要打的字：加上底線游標與背景 */
+        .char-current { 
+            background: rgba(85, 107, 47, 0.2); /* 淡淡的強調色 */
+            color: var(--text); 
+            border-bottom: 3px solid var(--primary); /* 底部游標 */
+            border-radius: 2px;
+            font-weight: bold;
+        }
+        
+        /* 2. 打對的字：變淡，讓視線自動忽略 */
+        .char-correct { 
+            color: #d0d0d0; /* 極淡灰色 */
+            transition: color 0.2s;
+        } 
+        
+        /* 3. 打錯的字：紅色 */
+        .char-wrong { 
+            background: var(--accent); 
+            color: white; 
+            border-radius: 4px; 
+        }
+        
+        /* 輸入框樣式 */
         #inputField { 
             width: 100%; 
-            height: 60px; /* 固定高度 */
+            height: 60px; 
             font-size: 24px; 
             padding: 10px 15px; 
             border: 2px solid var(--primary); 
             border-radius: 8px; 
             box-sizing: border-box; 
             outline: none; 
-            resize: none; /* 禁止使用者拉動大小 */
-            overflow: hidden; /* 隱藏捲軸 */
+            resize: none; 
+            overflow: hidden; 
             font-family: inherit;
         }
 
@@ -73,8 +111,7 @@
 <body>
 
 <div class="wrapper">
-    <div class="ad-sidebar">
-        </div>
+    <div class="ad-sidebar"></div>
 
     <div class="container">
         <div class="theme-panel">
@@ -98,6 +135,7 @@
                 <span>🚀 速度：<span id="speedDisplay">0</span> 字/分</span>
                 <span>🎯 正確率：<span id="accDisplay">100%</span></span>
             </div>
+            
             <div id="displayArea"><div id="textContainer"></div></div>
             
             <textarea id="inputField" placeholder="點此開始輸入..." oninput="processInput()" autocomplete="off"></textarea>
@@ -109,8 +147,7 @@
         </div>
     </div>
 
-    <div class="ad-sidebar">
-        </div>
+    <div class="ad-sidebar"></div>
 </div>
 
 <script>
@@ -158,20 +195,19 @@
         const spans = document.getElementById('textContainer').querySelectorAll('span');
         const displayArea = document.getElementById('displayArea'); 
         let correctCount = 0;
+        let currentSpan = null;
 
         spans.forEach((span, i) => {
             span.className = '';
-            // --- 判斷邏輯 ---
+            
             if (inputVal[i] == null) {
                 // 還沒打到的字
                 if (i === inputVal.length) {
                     span.className = 'char-current';
-                    // ★自動捲動修正★
-                    displayArea.scrollTop = span.offsetTop; 
+                    currentSpan = span; // 記住當前這個字
                 }
             } else {
                 // 已經打過的字
-                // 因為我們現在支援 Enter (\n)，這裡會自動比對原文的換行符號
                 if(inputVal[i] === span.innerText) { 
                     span.className = 'char-correct'; 
                     correctCount++; 
@@ -180,6 +216,15 @@
                 }
             }
         });
+
+        // ★ 核心修復：垂直置中捲動演算法 ★
+        // 邏輯：算出當前字的位置，減去視窗高度的一半，讓該行保持在正中間
+        if (currentSpan) {
+            let topPos = currentSpan.offsetTop;
+            let displayHeight = displayArea.clientHeight;
+            // 讓文字保持在中間，而不是頂部
+            displayArea.scrollTop = topPos - (displayHeight / 2) + 20; 
+        }
 
         if(inputVal.length > 0) document.getElementById('accDisplay').innerText = Math.floor((correctCount / inputVal.length) * 100) + "%";
         updateSpeed(correctCount);
@@ -199,10 +244,7 @@
             const inputVal = document.getElementById('inputField').value;
             let correctCount = 0;
             const spans = document.getElementById('textContainer').querySelectorAll('span');
-            // 這裡的邏輯也要支援多行
-            for(let i=0; i<inputVal.length; i++) { 
-                if(inputVal[i] === spans[i]?.innerText) correctCount++; 
-            }
+            for(let i=0; i<inputVal.length; i++) { if(inputVal[i] === spans[i]?.innerText) correctCount++; }
             updateSpeed(correctCount);
             if(timeLeft <= 0) endGame("⏰ 時間到！");
         }, 1000);

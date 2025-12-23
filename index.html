@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>日文打字練習 - 視覺聚焦版</title>
+    <title>日文打字練習 - 嚴格換行版</title>
     
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6485376162723745"
      crossorigin="anonymous"></script>
@@ -27,78 +27,58 @@
 
         textarea, input[type="number"] { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #ddd; font-size: 16px; margin-bottom: 20px; outline: none; box-sizing: border-box; }
         
-        /* 顯示區域樣式 - 視覺優化 */
+        /* 顯示區域樣式 - 視覺聚焦 */
         #displayArea { 
             font-size: 28px; 
             line-height: 2.5; 
-            height: 220px; /*稍微縮小高度，讓視線更集中*/
+            height: 220px; 
             overflow: hidden; 
-            padding: 40px 20px; /* 增加內距，讓文字不會貼邊 */
-            border: none; /* 移除邊框，更乾淨 */
-            background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.02) 100%); /* 微弱漸層 */
+            padding: 40px 20px; 
+            border: none; 
+            background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.02) 100%); 
             border-radius: 10px; 
-            margin-bottom: 40px; /* ★關鍵：增加底部距離，把輸入框推遠，避免擋住 */
+            margin-bottom: 40px; 
             white-space: pre-wrap; 
             word-break: break-all; 
             position: relative; 
-            text-align: left; /* 確保靠左對齊 */
+            text-align: left; 
         }
 
-        /* 加上一個中間的輔助線（選擇性，增加專注感） */
         #displayArea::before {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: rgba(0,0,0,0.03);
-            pointer-events: none;
-            z-index: 0;
+            content: ""; position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: rgba(0,0,0,0.03); pointer-events: none; z-index: 0;
         }
 
-        #textContainer {
-            position: relative;
-            z-index: 1;
-        }
+        #textContainer { position: relative; z-index: 1; }
 
-        /* ★ 重點：文字狀態樣式 ★ */
-        
-        /* 1. 當前要打的字：加上底線游標與背景 */
+        /* ★ 文字狀態樣式 ★ */
         .char-current { 
-            background: rgba(85, 107, 47, 0.2); /* 淡淡的強調色 */
+            background: rgba(85, 107, 47, 0.2); 
             color: var(--text); 
-            border-bottom: 3px solid var(--primary); /* 底部游標 */
+            border-bottom: 3px solid var(--primary); 
             border-radius: 2px;
             font-weight: bold;
         }
         
-        /* 2. 打對的字：變淡，讓視線自動忽略 */
-        .char-correct { 
-            color: #d0d0d0; /* 極淡灰色 */
-            transition: color 0.2s;
-        } 
+        .char-correct { color: #d0d0d0; transition: color 0.2s; } 
+        .char-wrong { background: var(--accent); color: white; border-radius: 4px; }
         
-        /* 3. 打錯的字：紅色 */
-        .char-wrong { 
-            background: var(--accent); 
-            color: white; 
-            border-radius: 4px; 
+        /* ★ 新增：換行符號的樣式 (Enter) ★ */
+        .char-return::after {
+            content: '↵'; /* 顯示 Enter 符號 */
+            font-size: 0.7em;
+            color: #ccc;
+            margin-left: 2px;
+            vertical-align: middle;
         }
-        
+        /* 當打到換行符號時，符號要變色 */
+        .char-current.char-return::after { color: var(--primary); }
+        .char-correct.char-return::after { color: #e0e0e0; }
+
         /* 輸入框樣式 */
         #inputField { 
-            width: 100%; 
-            height: 60px; 
-            font-size: 24px; 
-            padding: 10px 15px; 
-            border: 2px solid var(--primary); 
-            border-radius: 8px; 
-            box-sizing: border-box; 
-            outline: none; 
-            resize: none; 
-            overflow: hidden; 
-            font-family: inherit;
+            width: 100%; height: 60px; font-size: 24px; padding: 10px 15px; 
+            border: 2px solid var(--primary); border-radius: 8px; box-sizing: border-box; 
+            outline: none; resize: none; overflow: hidden; font-family: inherit;
         }
 
         .btn-group { display: flex; gap: 15px; margin-top: 25px; }
@@ -123,7 +103,9 @@
 
         <div id="setupArea">
             <h2 style="text-align:center; color:var(--primary);">🇯🇵 日文打字練習</h2>
-            <textarea id="sourceText" placeholder="在此貼上練習文章...">あいうえお かきくけこ さしすせそ たちつてと なにぬねの はひふへほ まみむめも やゆよ らりるれろ わをん</textarea>
+            <textarea id="sourceText" placeholder="在此貼上練習文章...">あいうえお かきくけこ
+さしすせそ たちつてと
+なにぬねの</textarea>
             <label style="font-weight:bold; color:var(--primary);">設定分鐘數：</label>
             <input type="number" id="timeSetting" value="1" min="0.5" step="0.5">
             <button class="btn" onclick="startGame()">開始練習</button>
@@ -137,7 +119,6 @@
             </div>
             
             <div id="displayArea"><div id="textContainer"></div></div>
-            
             <textarea id="inputField" placeholder="點此開始輸入..." oninput="processInput()" autocomplete="off"></textarea>
             
             <div class="btn-group">
@@ -156,7 +137,11 @@
     function changeTheme(theme) { document.documentElement.setAttribute('data-theme', theme === 'default' ? '' : theme); }
     
     function startGame() {
-        originalText = document.getElementById('sourceText').value.trim();
+        // 這裡會抓取原始的換行符號
+        originalText = document.getElementById('sourceText').value; 
+        // 移除前後多餘空白，但保留中間的換行
+        originalText = originalText.trim(); 
+        
         if(!originalText) return alert("請貼上內容");
         let min = parseFloat(document.getElementById('timeSetting').value) || 1;
         totalTime = Math.floor(min * 60);
@@ -181,7 +166,15 @@
         originalText.split('').forEach((char, i) => {
             const span = document.createElement('span'); 
             span.innerText = char;
-            if (i === 0) span.className = 'char-current'; 
+            
+            // ★ 新增：如果遇到換行符號，給它特殊的 class ★
+            if (char === '\n') {
+                span.className = 'char-return';
+            }
+            
+            if (i === 0) {
+                span.classList.add('char-current');
+            }
             container.appendChild(span);
         });
         document.getElementById('displayArea').scrollTop = 0;
@@ -198,31 +191,32 @@
         let currentSpan = null;
 
         spans.forEach((span, i) => {
-            span.className = '';
+            // 重置基本樣式，保留 char-return
+            span.className = (originalText[i] === '\n') ? 'char-return' : '';
             
             if (inputVal[i] == null) {
                 // 還沒打到的字
                 if (i === inputVal.length) {
-                    span.className = 'char-current';
-                    currentSpan = span; // 記住當前這個字
+                    span.classList.add('char-current');
+                    currentSpan = span; 
                 }
             } else {
                 // 已經打過的字
-                if(inputVal[i] === span.innerText) { 
-                    span.className = 'char-correct'; 
+                // ★ 關鍵修正：直接比對 originalText (原始碼) ★
+                // 這保證了如果原始碼是換行，你就必須打換行，打空白會被判錯
+                if(inputVal[i] === originalText[i]) { 
+                    span.classList.add('char-correct'); 
                     correctCount++; 
                 } else { 
-                    span.className = 'char-wrong'; 
+                    span.classList.add('char-wrong'); 
                 }
             }
         });
 
-        // ★ 核心修復：垂直置中捲動演算法 ★
-        // 邏輯：算出當前字的位置，減去視窗高度的一半，讓該行保持在正中間
+        // 垂直置中捲動邏輯
         if (currentSpan) {
             let topPos = currentSpan.offsetTop;
             let displayHeight = displayArea.clientHeight;
-            // 讓文字保持在中間，而不是頂部
             displayArea.scrollTop = topPos - (displayHeight / 2) + 20; 
         }
 
@@ -243,8 +237,10 @@
             timeLeft--; document.getElementById('timerDisplay').innerText = timeLeft;
             const inputVal = document.getElementById('inputField').value;
             let correctCount = 0;
-            const spans = document.getElementById('textContainer').querySelectorAll('span');
-            for(let i=0; i<inputVal.length; i++) { if(inputVal[i] === spans[i]?.innerText) correctCount++; }
+            // 計時器更新時，也要用 originalText 來檢查速度
+            for(let i=0; i<inputVal.length; i++) { 
+                if(inputVal[i] === originalText[i]) correctCount++; 
+            }
             updateSpeed(correctCount);
             if(timeLeft <= 0) endGame("⏰ 時間到！");
         }, 1000);

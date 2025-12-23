@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>日文打字練習 - 嚴格換行版</title>
+    <title>日文打字練習 - 最終修正版v5.2</title>
     
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6485376162723745"
      crossorigin="anonymous"></script>
@@ -27,30 +27,41 @@
 
         textarea, input[type="number"] { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #ddd; font-size: 16px; margin-bottom: 20px; outline: none; box-sizing: border-box; }
         
-        /* 顯示區域樣式 - 視覺聚焦 */
+        /* 顯示區域樣式 */
         #displayArea { 
             font-size: 28px; 
             line-height: 2.5; 
-            height: 220px; 
+            height: 250px; /* 稍微加高視野 */
             overflow: hidden; 
             padding: 40px 20px; 
             border: none; 
             background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.02) 100%); 
             border-radius: 10px; 
-            margin-bottom: 40px; 
+            
+            /* ★ 修正點 2：增加底部安全距離，防止 IME 往上長時遮到字 ★ */
+            margin-bottom: 60px; 
+            
             white-space: pre-wrap; 
             word-break: break-all; 
             position: relative; 
             text-align: left; 
         }
 
+        /* 輔助線 (現在移到偏上位置) */
         #displayArea::before {
-            content: ""; position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: rgba(0,0,0,0.03); pointer-events: none; z-index: 0;
+            content: ""; position: absolute; top: 40%; left: 0; right: 0; height: 2px; background: rgba(0,0,0,0.03); pointer-events: none; z-index: 0;
         }
 
-        #textContainer { position: relative; z-index: 1; }
+        #textContainer { 
+            position: relative; 
+            z-index: 1; 
+            /* ★ 修正點 1：幽靈填充 (Ghost Padding) ★ */
+            /* 這讓最後一行字也能被捲動到上面，不會卡在底部 */
+            padding-bottom: 250px; 
+            display: block;
+        }
 
-        /* ★ 文字狀態樣式 ★ */
+        /* 文字狀態樣式 */
         .char-current { 
             background: rgba(85, 107, 47, 0.2); 
             color: var(--text); 
@@ -62,15 +73,14 @@
         .char-correct { color: #d0d0d0; transition: color 0.2s; } 
         .char-wrong { background: var(--accent); color: white; border-radius: 4px; }
         
-        /* ★ 新增：換行符號的樣式 (Enter) ★ */
+        /* 換行符號樣式 */
         .char-return::after {
-            content: '↵'; /* 顯示 Enter 符號 */
+            content: '↵'; 
             font-size: 0.7em;
             color: #ccc;
             margin-left: 2px;
             vertical-align: middle;
         }
-        /* 當打到換行符號時，符號要變色 */
         .char-current.char-return::after { color: var(--primary); }
         .char-correct.char-return::after { color: #e0e0e0; }
 
@@ -137,11 +147,8 @@
     function changeTheme(theme) { document.documentElement.setAttribute('data-theme', theme === 'default' ? '' : theme); }
     
     function startGame() {
-        // 這裡會抓取原始的換行符號
         originalText = document.getElementById('sourceText').value; 
-        // 移除前後多餘空白，但保留中間的換行
         originalText = originalText.trim(); 
-        
         if(!originalText) return alert("請貼上內容");
         let min = parseFloat(document.getElementById('timeSetting').value) || 1;
         totalTime = Math.floor(min * 60);
@@ -166,15 +173,8 @@
         originalText.split('').forEach((char, i) => {
             const span = document.createElement('span'); 
             span.innerText = char;
-            
-            // ★ 新增：如果遇到換行符號，給它特殊的 class ★
-            if (char === '\n') {
-                span.className = 'char-return';
-            }
-            
-            if (i === 0) {
-                span.classList.add('char-current');
-            }
+            if (char === '\n') span.className = 'char-return';
+            if (i === 0) span.classList.add('char-current');
             container.appendChild(span);
         });
         document.getElementById('displayArea').scrollTop = 0;
@@ -191,19 +191,13 @@
         let currentSpan = null;
 
         spans.forEach((span, i) => {
-            // 重置基本樣式，保留 char-return
             span.className = (originalText[i] === '\n') ? 'char-return' : '';
-            
             if (inputVal[i] == null) {
-                // 還沒打到的字
                 if (i === inputVal.length) {
                     span.classList.add('char-current');
                     currentSpan = span; 
                 }
             } else {
-                // 已經打過的字
-                // ★ 關鍵修正：直接比對 originalText (原始碼) ★
-                // 這保證了如果原始碼是換行，你就必須打換行，打空白會被判錯
                 if(inputVal[i] === originalText[i]) { 
                     span.classList.add('char-correct'); 
                     correctCount++; 
@@ -213,11 +207,13 @@
             }
         });
 
-        // 垂直置中捲動邏輯
+        // ★ 修正點 3：改良版置中鎖定演算法 ★
         if (currentSpan) {
             let topPos = currentSpan.offsetTop;
             let displayHeight = displayArea.clientHeight;
-            displayArea.scrollTop = topPos - (displayHeight / 2) + 20; 
+            // 讓文字保持在「偏上」的位置 (35% 處)，而非正中間
+            // 這樣下方留白更多，更能避開 IME
+            displayArea.scrollTop = topPos - (displayHeight * 0.35); 
         }
 
         if(inputVal.length > 0) document.getElementById('accDisplay').innerText = Math.floor((correctCount / inputVal.length) * 100) + "%";
@@ -237,7 +233,6 @@
             timeLeft--; document.getElementById('timerDisplay').innerText = timeLeft;
             const inputVal = document.getElementById('inputField').value;
             let correctCount = 0;
-            // 計時器更新時，也要用 originalText 來檢查速度
             for(let i=0; i<inputVal.length; i++) { 
                 if(inputVal[i] === originalText[i]) correctCount++; 
             }

@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>日文打字練習 - Ning</title>
+    <title>日文打字練習 - 修正捲動版</title>
     
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6485376162723745"
      crossorigin="anonymous"></script>
 
     <style>
-        /* --- 樣式設定 (包含側邊欄與速度顯示) --- */
-        :root { var(--bg: #f0f2f5); --box: #ffffff; --primary: #34495e; --text: #2c3e50; --accent: #e74c3c; }
+        /* --- 樣式設定 --- */
+        :root { --bg: #f0f2f5; --box: #ffffff; --primary: #34495e; --text: #2c3e50; --accent: #e74c3c; }
         [data-theme="matcha"] { --bg: #e6e6d1; --box: #fbfbf6; --primary: #556b2f; --text: #3e4a2e; }
         [data-theme="sakura"] { --bg: #f2e6e6; --box: #fffafa; --primary: #b35a6d; --text: #5d3a43; }
         [data-theme="blue"] { --bg: #dbe4eb; --box: #f5f9fc; --primary: #375a7f; --text: #20354b; }
@@ -26,7 +26,23 @@
         .btn-sakura { background-color: #b35a6d; } .btn-blue { background-color: #375a7f; }
 
         textarea, input[type="number"] { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #ddd; font-size: 16px; margin-bottom: 20px; outline: none; box-sizing: border-box; }
-        #displayArea { font-size: 28px; line-height: 2.8; height: 300px; overflow: hidden; padding: 20px; border: 2px solid rgba(0,0,0,0.05); border-radius: 10px; margin-bottom: 20px; white-space: pre-wrap; word-break: break-all; background: var(--box); }
+        
+        /* 顯示區域樣式 */
+        #displayArea { 
+            font-size: 28px; 
+            line-height: 2.8; /* 行高設定 */
+            height: 300px; 
+            overflow: hidden; /* 隱藏超出範圍的文字 */
+            padding: 20px; 
+            border: 2px solid rgba(0,0,0,0.05); 
+            border-radius: 10px; 
+            margin-bottom: 20px; 
+            white-space: pre-wrap; 
+            word-break: break-all; 
+            background: var(--box); 
+            position: relative; /* 確保捲動定位準確 */
+        }
+
         .char-current { background: var(--primary); color: #fff; border-radius: 4px; }
         .char-correct { color: #bbb; } .char-wrong { background: var(--accent); color: white; border-radius: 4px; }
         #inputField { width: 100%; height: 60px; font-size: 24px; padding: 10px 15px; border: 2px solid var(--primary); border-radius: 8px; box-sizing: border-box; outline: none; }
@@ -80,7 +96,9 @@
 
 <script>
     let originalText = "", timeLeft = 60, totalTime = 60, timerInterval = null, isPlaying = false, hasStarted = false;
+    
     function changeTheme(theme) { document.documentElement.setAttribute('data-theme', theme === 'default' ? '' : theme); }
+    
     function startGame() {
         originalText = document.getElementById('sourceText').value.trim();
         if(!originalText) return alert("請貼上內容");
@@ -90,7 +108,9 @@
         document.getElementById('practiceArea').style.display = 'block';
         resetGameLogic(totalTime);
     }
+    
     function retryGame() { startGame(); }
+    
     function resetGameLogic(seconds) {
         timeLeft = seconds; renderText();
         document.getElementById('timerDisplay').innerText = timeLeft;
@@ -99,6 +119,7 @@
         const input = document.getElementById('inputField'); input.value = ""; input.disabled = false; input.focus();
         hasStarted = false; isPlaying = true; if(timerInterval) clearInterval(timerInterval);
     }
+    
     function renderText() {
         const container = document.getElementById('textContainer'); container.innerHTML = "";
         originalText.split('').forEach((char, i) => {
@@ -107,34 +128,44 @@
         });
         document.getElementById('displayArea').scrollTop = 0;
     }
+    
+    // ★ 重點修正：processInput 函數 ★
     function processInput() {
         if(!isPlaying) return;
         if(!hasStarted) { hasStarted = true; startTimer(); }
+        
         const inputVal = document.getElementById('inputField').value;
         const spans = document.getElementById('textContainer').querySelectorAll('span');
-        const displayArea = document.getElementById('displayArea'); let correctCount = 0;
+        const displayArea = document.getElementById('displayArea'); 
+        let correctCount = 0;
+
         spans.forEach((span, i) => {
             span.className = '';
             if (inputVal[i] == null) {
                 if (i === inputVal.length) {
                     span.className = 'char-current';
-                    displayArea.scrollTop = span.offsetTop - (displayArea.offsetHeight / 2) + 30; 
+                    // --- 這裡修正了自動捲動邏輯 ---
+                    // 讓當前正在打的這行字，直接捲動到顯示框的最上方
+                    displayArea.scrollTop = span.offsetTop; 
                 }
             } else {
                 if(inputVal[i] === span.innerText) { span.className = 'char-correct'; correctCount++; }
                 else { span.className = 'char-wrong'; }
             }
         });
+
         if(inputVal.length > 0) document.getElementById('accDisplay').innerText = Math.floor((correctCount / inputVal.length) * 100) + "%";
         updateSpeed(correctCount);
         if (inputVal.length >= originalText.length) endGame("🎉 練習完成！");
     }
+    
     function updateSpeed(correctCount) {
         let timeElapsed = totalTime - timeLeft;
         if (timeElapsed <= 0) timeElapsed = 1;
         let cpm = Math.floor((correctCount / timeElapsed) * 60);
         document.getElementById('speedDisplay').innerText = cpm;
     }
+    
     function startTimer() {
         timerInterval = setInterval(() => {
             timeLeft--; document.getElementById('timerDisplay').innerText = timeLeft;
@@ -146,7 +177,9 @@
             if(timeLeft <= 0) endGame("⏰ 時間到！");
         }, 1000);
     }
+    
     function endGame(msg) { isPlaying = false; clearInterval(timerInterval); document.getElementById('inputField').disabled = true; setTimeout(() => alert(msg), 100); }
+    
     function backToSetup() { isPlaying = false; clearInterval(timerInterval); document.getElementById('practiceArea').style.display = 'none'; document.getElementById('setupArea').style.display = 'block'; }
 </script>
 </body>

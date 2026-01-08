@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>日文打字練習 - IME優化版v6.8</title>
+    <title>日文打字練習 - 堅若磐石版v7.0</title>
     
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6485376162723745"
      crossorigin="anonymous"></script>
@@ -68,7 +68,6 @@
             outline: none; resize: none; overflow: hidden; font-family: inherit;
             transition: box-shadow 0.1s;
         }
-        /* 輸入時的微發光特效 */
         #inputField:focus { box-shadow: 0 0 0 4px rgba(85, 107, 47, 0.1); }
 
         /* Combo 連擊特效 */
@@ -78,6 +77,24 @@
         }
         #comboDisplay.show { opacity: 1; transform: scale(1); }
         #comboDisplay.pop { transform: scale(1.3); }
+
+        /* 按鈕樣式 (復原為原本的藍色) */
+        .btn-group { display: flex; gap: 15px; margin-top: 25px; }
+        .btn { 
+            padding: 14px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            font-weight: bold; 
+            width: 100%; 
+            background: var(--primary); 
+            color: white; 
+            transition: 0.2s; 
+            appearance: none; 
+            -webkit-appearance: none;
+        }
+        .btn:hover { opacity: 0.9; transform: translateY(-2px); }
 
         @media (max-width: 1100px) { .ad-sidebar { display: none; } .container { margin: 0; } }
     </style>
@@ -109,7 +126,7 @@
             
             <div id="displayArea"><div id="textContainer"></div></div>
             
-            <textarea id="inputField" placeholder="點此開始輸入..." oninput="processInput()" autocomplete="off"></textarea>
+            <textarea id="inputField" placeholder="點此開始輸入..." autocomplete="off"></textarea>
             
             <div class="btn-group">
                 <button class="btn" onclick="retryGame()">🔄 重新開始</button>
@@ -158,8 +175,6 @@
 <script>
     let originalText = "", timeLeft = 60, totalTime = 60, timerInterval = null, isPlaying = false, hasStarted = false;
     let comboCount = 0;
-    
-    // ★ 關鍵修正：追蹤是否正在拼字中 ★
     let isComposing = false; 
 
     // --- 音效引擎 ---
@@ -169,6 +184,11 @@
     masterGain.connect(audioCtx.destination);
     masterGain.gain.value = 0.5;
     let currentSoundType = 'mechanical';
+
+    // 解決 iOS/Safari 可能沒有聲音的問題 (User Interaction Unlock)
+    document.body.addEventListener('click', () => {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }, { once: true });
 
     function playRealClick(type) {
         if (currentSoundType === 'mute') return;
@@ -218,8 +238,10 @@
 
     function setSound(type, element) {
         currentSoundType = type;
-        document.querySelectorAll('.sound-option').forEach(el => el.classList.remove('active'));
-        if(element) element.classList.add('active');
+        if (element) {
+            document.querySelectorAll('.sound-option').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+        }
         if(type !== 'mute') playRealClick(type);
     }
 
@@ -240,15 +262,14 @@
         document.getElementById('practiceArea').style.display = 'block';
         if (audioCtx.state === 'suspended') audioCtx.resume();
         
-        // ★ 這裡綁定 IME 偵測事件 ★
-        const input = document.getElementById('inputField');
-        input.addEventListener('compositionstart', () => { isComposing = true; });
-        input.addEventListener('compositionend', () => { isComposing = false; processInput(); }); // 結束拼字時再檢查一次
-        
         resetGameLogic(totalTime);
     }
     
-    function retryGame() { startGame(); }
+    // ★ 修正：retryGame 改為清除計時器並重置，而不是直接呼叫 startGame (避免事件堆疊)
+    function retryGame() { 
+        clearInterval(timerInterval);
+        resetGameLogic(totalTime); 
+    }
     
     function resetGameLogic(seconds) {
         timeLeft = seconds; renderText();
@@ -256,8 +277,15 @@
         document.getElementById('accDisplay').innerText = "100%";
         document.getElementById('speedDisplay').innerText = "0";
         comboCount = 0; updateComboDisplay();
-        const input = document.getElementById('inputField'); input.value = ""; input.disabled = false; input.focus();
-        hasStarted = false; isPlaying = true; if(timerInterval) clearInterval(timerInterval);
+        
+        const input = document.getElementById('inputField'); 
+        input.value = ""; 
+        input.disabled = false; 
+        input.focus();
+        input.removeAttribute('data-prev-len'); // ★ 清除上次長度紀錄
+        
+        hasStarted = false; isPlaying = true; 
+        if(timerInterval) clearInterval(timerInterval);
     }
     
     function renderText() {
@@ -283,6 +311,7 @@
             else comboEl.style.color = "var(--primary)";
         } else {
             comboEl.classList.remove('show');
+            comboEl.style.color = "var(--primary)"; // 重置顏色
         }
     }
 
@@ -315,23 +344,26 @@
             }
         });
 
-        // ★ 音效觸發邏輯修正：如果正在拼字(isComposing)，不要報錯！ ★
-        if (inputVal.length > 0) {
-             if (inputVal.length > (document.getElementById('inputField').getAttribute('data-prev-len') || 0)) {
+        const inputField = document.getElementById('inputField');
+        const prevLen = parseInt(inputField.getAttribute('data-prev-len') || "0");
+        
+        // ★ 音效觸發邏輯 ★
+        if (inputVal.length > prevLen) {
+             // 1. 只要有打字就給按鍵聲 (滿足手感)
+             playRealClick(currentSoundType);
+
+             // 2. 判斷對錯 (非拼字時)
+             if (!isComposing) {
                  if (isError) {
-                     // 只有在「不是」拼字狀態下，才播放錯誤音效
-                     if (!isComposing) {
-                         playErrorSound();
-                         comboCount = 0; 
-                     }
+                     playErrorSound();
+                     comboCount = 0; 
                  } else {
-                     playRealClick(currentSoundType);
                      comboCount++; 
                  }
                  updateComboDisplay();
              }
         }
-        document.getElementById('inputField').setAttribute('data-prev-len', inputVal.length);
+        inputField.setAttribute('data-prev-len', inputVal.length);
 
         if (currentSpan) {
             let topPos = currentSpan.offsetTop;
@@ -365,6 +397,12 @@
     function endGame(msg) { isPlaying = false; clearInterval(timerInterval); document.getElementById('inputField').disabled = true; setTimeout(() => alert(msg), 100); }
     
     function backToSetup() { isPlaying = false; clearInterval(timerInterval); document.getElementById('practiceArea').style.display = 'none'; document.getElementById('setupArea').style.display = 'block'; }
+
+    // ★ 重點修正：將事件監聽移到全域，只綁定一次 ★
+    const inputEl = document.getElementById('inputField');
+    inputEl.addEventListener('input', processInput);
+    inputEl.addEventListener('compositionstart', () => { isComposing = true; });
+    inputEl.addEventListener('compositionend', () => { isComposing = false; processInput(); });
 </script>
 </body>
 </html>
